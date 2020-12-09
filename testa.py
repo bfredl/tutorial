@@ -13,7 +13,8 @@ def lyssna(sig):
     return fil
 
 
-signal = nussl.AudioSignal("/home/bjorn/ljudbild/lydmorean/anoraak/evolve_cut.wav")
+#signal = nussl.AudioSignal("/home/bjorn/ljudbild/lydmorean/anoraak/evolve_cut.wav")
+signal = nussl.AudioSignal("/home/bjorn/ljudbild/lydmorean/anoraak/Anoraak, Lydmor - Black Gold Sun - 01 Evolve feat. Lydmor.flac")
 print(signal)
 
 st = signal.stft()
@@ -122,33 +123,42 @@ call(["audacious", test[1].embed_audio().filename])
 lmix = mix.make_audio_signal_from_channel(0)
 testen = nussl.separation.deep.DeepClustering(mix, model_path="slakhv0_9bDQSFk.pth", device='cuda', num_sources=2)
 
+##
 modellera = "slakhv0_9bDQSFk.pth"
 modellera = "musdbv0_hnQwdQ4.pth"
 modellera = "musdb+slakhv0_TG3EvX6.pth"
 dc = []
 for i in range(2):
     imix = mix.make_audio_signal_from_channel(i)
-    testen = nussl.separation.deep.DeepClustering(imix, model_path=modellera, device='cuda', num_sources=2)
+    testen = nussl.separation.deep.DeepClustering(imix, model_path=modellera, device='cuda', num_sources=4)
     test = testen(); print(len(test))
     dc.append(test)
 
 rrs = []
 for r in zip(*dc):
     newdat = np.concatenate([r[0].audio_data, r[1].audio_data],axis=0)
-    result = rechan[0][0].make_copy_with_audio_data(newdat)
+    result = dc[0][0].make_copy_with_audio_data(newdat)
     rrs.append(result)
 
-path = lyssna(rrs[1])
-call(["scp", path, "thepgit:public_html/x_isol.mp3"])
+path = lyssna(rrs[0])
+if False:
+    call(["scp", path, "thepgit:public_html/x_isol.mp3"])
+
+##
 
 remap = [[0,1,2,3], [3, 0, 2, 1]]
+remap = [[0,1], [1, 0]]
 rs = []
 for r in zip(*remap):
     newdat = np.concatenate([dc[0][r[0]].audio_data, dc[1][r[1]].audio_data],axis=0)
-    result = rechan[0][0].make_copy_with_audio_data(newdat)
+    result = dc[0][0].make_copy_with_audio_data(newdat)
     rs.append(result)
 
-lyssna(rs[3])
+ids = 1
+path = lyssna(rs[ids])
+if False:
+    call(["cp", path, "isol_m_combine_{}.mp3".format(path)])
+##
 
 nussl.core.audio_signal
 model_path = nussl.utils.download_trained_model('slakhv0_9bDQSFk.pth')
